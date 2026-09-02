@@ -17,7 +17,7 @@ public class BarberShopMain {
         Scanner teclado = new Scanner(System.in);
 
         try {
-            System.out.println("Introduzca usuario");
+            System.out.println("Introduzca usuario 'Antonio'");
             String login =teclado.next();
             System.out.println("Introduzca contraseña");
             String pass =teclado.next();
