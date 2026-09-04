@@ -47,27 +47,40 @@ public  class AppointmentRepository {
     }
 
     public int addAppointment(Appointment appointment) throws SQLException {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("insert into appointments (id_customer,date_appointment,hour_appointment,service )" +
-                " values\n" +
-                "(?,?,?,?)")) {
+        try(PreparedStatement preparedStatement = connection.prepareStatement("insert into appointments " +
+                        " (date_appointment,hour_appointment,service,id_customer) " +
+                        " values (?,?,?, (Select id_customer from customers where phone = ?))")){
 
-            preparedStatement.setInt(1, appointment.getIdCustomer());
-            preparedStatement.setObject(2, appointment.getDateAppointment());
-            preparedStatement.setObject(3, appointment.getHourAppointment());
-            preparedStatement.setString(4, appointment.getService());
+
+            preparedStatement.setObject(1, appointment.getDateAppointment());
+            preparedStatement.setObject(2, appointment.getHourAppointment());
+            preparedStatement.setString(3, appointment.getService());
+            preparedStatement.setString(4, "+34 " + appointment.getPhone());
             return preparedStatement.executeUpdate();
-        }
+            }
     }
 
+
     public int cancelledAppointment(String state, int id_appointment) throws SQLException {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("UPDATE appointments " +
-                "set state = ? " +
-                "where id_appointment = ?")) {
+        try (
+
+                PreparedStatement appointmentRepeat = connection.prepareStatement("select id_appointment, state from appointments where  state = ? and id_appointment= ? ");
+
+                PreparedStatement preparedStatement = connection.prepareStatement("update appointments set state = ? where  id_appointment = ? ")) {
+
             preparedStatement.setString(1, state);
             preparedStatement.setInt(2, id_appointment);
 
+            appointmentRepeat.setInt(2,id_appointment);
+            appointmentRepeat.setString(1,state);
 
-            return preparedStatement.executeUpdate();
+            ResultSet valid = appointmentRepeat.executeQuery();
+            boolean flag = valid.next();
+            if (flag) {
+                return -1;
+            } else {
+                return preparedStatement.executeUpdate();
+            }
 
         }
     }
@@ -144,12 +157,13 @@ public  class AppointmentRepository {
         }
     }
 
-    public  int  modifyAppointment(LocalDate date_appointment,int id_appointment)throws SQLException {
+    public  int  modifyAppointment(LocalDate date_appointment,int id_appointment,String phone)throws SQLException {
         try (PreparedStatement preparedModifyAppointment = connection.prepareStatement("update appointments\n" +
                 "set date_appointment = ?" +
-                "where id_appointment = ?")) {
+                "where id_appointment = ? and id_customer = (select id_customer from customers where phone = ?)")) {
             preparedModifyAppointment.setObject(1, date_appointment);
             preparedModifyAppointment.setInt(2, id_appointment);
+            preparedModifyAppointment.setString(3,phone);
             return preparedModifyAppointment.executeUpdate();
 
         }
@@ -158,15 +172,29 @@ public  class AppointmentRepository {
 
 
 
-    public int  modifyAppointmentphone(LocalTime chHour,String phone)throws SQLException{
-        try(PreparedStatement preparedStatement = connection.prepareStatement("update appointments set hour_appointment = ?" +
-                " where id_customer = (select id_customer from customers where phone = ?) ")) {
+    public int  modifyAppointmentphone(LocalTime chHour,String phone,int idAppointment)throws SQLException{
+        try(
+
+                PreparedStatement SqlOff = connection.prepareStatement("set SQL_SAFE_UPDATES = 0 ");
+
+                PreparedStatement preparedStatement = connection.prepareStatement("update appointments " +
+                                                                                      " set hour_appointment = ? " +
+                                                                                      " where id_customer = ( " +
+                                                                                      " select id_customer from customers " +
+                                                                                      " where phone = ? and id_appointment = ? );")
+        )
+        {
+            SqlOff.executeUpdate();
 
 
             preparedStatement.setObject(1, chHour);
             preparedStatement.setString(2, phone);
+            preparedStatement.setInt(3,idAppointment);
 
             return preparedStatement.executeUpdate();
+        }finally {
+            PreparedStatement SqlOn = connection.prepareStatement("set SQL_safe_updates=1");
+            SqlOn.executeUpdate();
         }
     }
 

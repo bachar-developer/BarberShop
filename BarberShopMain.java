@@ -41,49 +41,63 @@ public class BarberShopMain {
                         "3º Update\n" +
                         "4º Delete\n" +
                         "5º Salir\n");
+                try{
 
                 System.out.println("Por favor Elija una opcion");
                 menuSuperior = teclado.nextInt();
 
-                try {
 
-                    switch (menuSuperior) {
-                        case (1): {
+
+
+                        switch (menuSuperior) {
+                            case (1): {
                             create(teclado, appointmentRepository, customerRepository);
                             break;
                         }
-                        case (2): {
+                            case (2): {
                             read(teclado, appointmentRepository, customerRepository);
                             break;
 
                         }
-                        case (3): {
+                            case (3): {
                             update(teclado,appointmentRepository);
                             break;
 
                         }
-                        case (4): {
+                            case (4): {
                             delete(teclado, appointmentRepository);
                             break;
                         }
-                        case (5): {
+                            case (5): {
                             System.out.println("Gracias por usar nuestro sistema");
                             return;
+
+                        }
+                            default:{
+                            System.out.println("La opción introducida no existe");
+                            break;
                         }
 
                     }
-
-                } catch (SQLException e) {
+                    }catch (SQLException e) {
                     System.out.println("Error al realizar la operación en la base de datos");
-                }catch (DateTimeParseException e){
+                    System.out.println(e.getMessage());
+
+                    }catch (DateTimeParseException e){
                     System.out.println("\nError el formato introducido no es correcto\n");
-                }
-            }}else {
+
+                    }catch (InputMismatchException e){
+                    System.out.println("Solo se admiten numeros");
+                    teclado.next();
+                    }
+            }
+            }else {
                 System.out.println("Contraseña o usuario incorrecto ");
             }
         } catch (SQLException e) {
             System.out.println("Fallo en la comunicacion con el servidor , verifique que el servidor esta encendido");
         }
+
     }
 
     public static void create(Scanner teclado, AppointmentRepository appointmentRepository, CustomerRepository customerRepository) throws SQLException {
@@ -101,14 +115,15 @@ public class BarberShopMain {
 
                 case (1): {
                     try {
-                        System.out.println("Introduce el ID_usuario : \n");
-                        String idCustomer = teclado.next();
-                        int idCustomerInt = Integer.parseInt(idCustomer);
+                        System.out.println("Introduce el telefono del usuario : \n");
+                        String phoneCustomer = teclado.next();
+                        teclado.nextLine();
 
                         System.out.println("Introduce la fecha : || Ejemplo [24/11/2026]");
                         String date = teclado.next();
                         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                         LocalDate dateAppointment = LocalDate.parse(date, dateTimeFormatter);
+                        teclado.nextLine();
 
                         System.out.println("Introduce la hora : || Ejemplo [12:30]");
                         String hour = teclado.next();
@@ -120,8 +135,10 @@ public class BarberShopMain {
                         System.out.println("Introduce la Descripcion del servicio");
                         String service = teclado.nextLine();
 
-                        Appointment newappointment = new Appointment(idCustomerInt, dateAppointment, hourAppointment, service);
+                        Appointment newappointment = new Appointment(phoneCustomer, dateAppointment, hourAppointment, service);
                         appointmentRepository.addAppointment(newappointment);
+
+
                     } catch (NumberFormatException e) {
                         System.out.println("Error : Solo se admiten numeros");
                     } catch (DateTimeParseException e) {
@@ -135,6 +152,7 @@ public class BarberShopMain {
                     try {
                         teclado.nextLine();
                         System.out.println("Introduce el nombre del usuario");
+
 
                         String first_name = teclado.nextLine();
                         var validName=true;
@@ -153,26 +171,33 @@ public class BarberShopMain {
                             System.out.println("Nombre Incorrecto");
                             break;
                         }else {
+
                             System.out.println("Introduce el telefono del usuario");
                             String phone = teclado.next();
-                            if (phone.length()< 9){
+                            teclado.nextLine();
+                            if (phone.length() != 9){
                                 System.out.println("Telefono invalido");
                             }else{
-                                System.out.println("Introduce el mail del usuario");
-                                String mail = teclado.next();
-                                teclado.nextLine();
-                                if (!mail.contains("@")){
-                                    System.out.println("\nError usuario no añadido");
-                                    System.out.println("\nDebe de introducir un correo electronico correcto\n");
-                                    break;
-                                }
+                                    System.out.println("Introduce el mail del usuario");
+                                    String mail = teclado.next();
+                                    teclado.nextLine();
+                                    if (!mail.contains("@") || !mail.contains(".")){
+                                        System.out.println("\nError usuario no añadido");
+                                        System.out.println("\nDebe de introducir un correo electronico correcto\n");
+                                        break;
+                                    }
+                                    Customer newCustomer = new Customer(first_name, "+34 " + phone, mail);
+                                    int incorrect = customerRepository.addCustomer(newCustomer);
+                                    if (incorrect==0){
+                                        System.out.println("No se puede guardar telefono o mail duplicado");
+                                    }else {
+                                        System.out.println("Usuario guardado satisfactoriamente");
+                                    }
 
-                                Customer newCustomer = new Customer(first_name, "+34 " + phone, mail);
-                                customerRepository.addCustomer(newCustomer);
+
                             }
 
                         }break;
-
 
                     }catch (Exception e){
                         System.out.println("Error : "+ e);
@@ -247,6 +272,9 @@ public class BarberShopMain {
 
                 case (1): {
                     try{
+                        System.out.println("Introduce el telefono del cliente");
+                        String phone = teclado.next();
+                        teclado.nextLine();
                     System.out.println("Introduce la Id_cita");
                     int idChAppointment = teclado.nextInt();
                     teclado.nextLine();
@@ -256,7 +284,7 @@ public class BarberShopMain {
                     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                     LocalDate localDate = LocalDate.parse(date, dateTimeFormatter);
 
-                    appointmentRepository.modifyAppointment(localDate, idChAppointment);
+                    appointmentRepository.modifyAppointment(localDate, idChAppointment,"+34 "+phone);
 
                     break;
                 } catch (InputMismatchException e) {
@@ -274,7 +302,11 @@ public class BarberShopMain {
                     System.out.println("Selecciona el numero de telefono ");
                     String phone= teclado.nextLine();
 
-                    appointmentRepository.modifyAppointmentphone(hour,"+34 "+phone);
+                    System.out.println("Introduce el numero de cita");
+                    int idAppointment=teclado.nextInt();
+                    //teclado.nextLine();
+
+                    appointmentRepository.modifyAppointmentphone(hour,"+34 "+phone,idAppointment);
                     break;
                 }
                 case (3): {
@@ -282,7 +314,16 @@ public class BarberShopMain {
 
                         System.out.println("Selecciona la ID de la cita para cancelar");
                         int id = teclado.nextInt();
-                        appointmentRepository.cancelledAppointment("cancelled", id);
+
+                        if (appointmentRepository.cancelledAppointment("cancelled",id ) == 0 ){
+                            System.out.println("no se encontró o no se pudo actualizar");
+
+                        }else if (appointmentRepository.cancelledAppointment("cancelled" , id) == -1 ) {
+                            System.out.println("Esa cita ya esta cancelada");
+                        }else{
+                            appointmentRepository.cancelledAppointment("cancelled", id);
+                            System.out.println("Se canceló correctamente");
+                        }
                         break;
 
                     }catch (InputMismatchException e){

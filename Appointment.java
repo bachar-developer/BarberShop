@@ -13,13 +13,15 @@ public class Appointment {
     private LocalTime hourAppointment ;
     private String service;
     private String state;
+    private String phone;
 
 
-    public Appointment(int idCustomer,LocalDate dateAppointment,LocalTime hourAppointment, String service){
-        this.idCustomer=idCustomer;
+    public Appointment(String phone,LocalDate dateAppointment,LocalTime hourAppointment, String service){
+        this.phone=phone;
         this.dateAppointment=dateAppointment;
         this.hourAppointment=hourAppointment;
         this.service=service;
+
 
     }
 
@@ -35,6 +37,9 @@ public class Appointment {
     }
     public String getService() {
         return this.service;
+    }
+    public String getPhone(){
+        return this.phone;
     }
 
 }

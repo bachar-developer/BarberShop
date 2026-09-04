@@ -10,14 +10,32 @@ public class CustomerRepository {
     }
 
     public int  addCustomer(Customer customer)throws SQLException {
-        try(PreparedStatement preparedStatement = connection.prepareStatement("insert into customers " +
-                                                                                     "(first_name,phone,mail)" +
-                                                                                     " values(?,?,?)");){
+        try(
+                PreparedStatement mailPhoneRepeat = connection.prepareStatement("Select phone,mail from customers where phone = ? or mail= ?");
 
-        preparedStatement.setString(1,customer.getFirst_name());
-        preparedStatement.setString(2,customer.getPhone());
-        preparedStatement.setString(3,customer.getMail());
-        return preparedStatement.executeUpdate();
+                PreparedStatement preparedStatement = connection.prepareStatement("insert into customers " +
+                                                                                     "(first_name,phone,mail)" +
+                                                                                     " values(?,?,?)"))
+
+        {
+            mailPhoneRepeat.setString(1, customer.getPhone());
+            mailPhoneRepeat.setString(2,customer.getMail());
+            ResultSet mailPhoneCorrect = mailPhoneRepeat.executeQuery();
+            boolean valid = mailPhoneCorrect.next();
+
+
+
+            if (valid ){
+
+                return 0;
+            }else {
+                preparedStatement.setString(1,customer.getFirst_name());
+                preparedStatement.setString(2,customer.getPhone());
+                preparedStatement.setString(3,customer.getMail());
+                return preparedStatement.executeUpdate();
+            }
+
+
     }
 }
 
